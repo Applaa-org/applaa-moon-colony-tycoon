@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lunar Colony Tycoon</title>
+    <meta charset="UTF-8">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #2d2d30 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #cccccc;
+        }
+        #gameContainer {
+            text-align: center;
+            padding: 20px;
+            position: relative;
+        }
+        #gameCanvas {
+            border: 2px solid #00bfff;
+            border-radius: 8px;
+            background: #1a1a1a;
+            box-shadow: 0 4px 20px rgba(0, 191, 255, 0.3);
+            display: block;
+            margin: 20px auto;
+        }
+        h1 {
+            background: linear-gradient(135deg, #00bfff, #ff8800);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .info {
+            color: #999999;
+            font-size: 14px;
+            margin-bottom: 20px;
+            max-width: 800px;
+        }
+        .resources {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 15px 0;
+            font-size: 16px;
+            color: #4ade80;
+            font-weight: bold;
+        }
+        .resources div {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #555;
+        }
+        #sidebar {
+            position: absolute;
+            left: 20px;
+            top: 200px;
+            width: 160px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #00bfff;
+            box-shadow: 0 4px 15px rgba(0, 191, 255, 0.2);
+        }
+        #sidebar button {
+            display: block;
+            width: 100%;
+            margin: 8px 0;
+            padding: 10px;
+            background: linear-gradient(135deg, #333, #444);
+            color: #ccc;
+            border: 1px solid #555;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        #sidebar button:hover {
+            background: linear-gradient(135deg, #00bfff, #0099cc);
+            color: white;
+            border-color: #00bfff;
+            transform: translateY(-1px);
+        }
+        #status {
+            margin: 15px 0;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 12px;
+            color: #ff6b6b;
+            text-align: left;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #555;
+        }
+        .controls {
+            margin-top: 15px;
+            color: #cccccc;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <h1>🌕 Lunar Colony Tycoon</h1>
+        <div class="info">Humanity's first steps on the Moon. As colony manager, build habitats, farms, and energy units while managing oxygen and power. Research new tech to expand and survive threats like meteor showers and moonquakes in this futuristic tycoon builder.</div>
+        <div class="resources">
+            <div>Money: <span id="money">500</span></div>
+            <div>Power: <span id="power">100</span></div>
+            <div>Oxygen: <span id="oxygen">100</span></div>
+            <div>Food: <span id="food">0</span></div>
+            <div>Population: <span id="population">0</span></div>
+        </div>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="sidebar">
+            <button onclick="selectBuilding('habitat')">Habitat (200)</button>
+            <button onclick="selectBuilding('farm')">Farm (150)</button>
+            <button onclick="selectBuilding('energy_unit')">Energy Unit (100)</button>
+            <button onclick="research()">Research (300)</button>
+        </div>
+        <div id="status"></div>
+        <div class="controls">
+            Select a building from the sidebar, then click on the grid to place it. Balance resources to grow your colony and survive events!
+        </div>
+    </div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game constants
+        const GRID_WIDTH = 20;
+        const GRID_HEIGHT = 15;
+        const CELL_SIZE = 40;
+        
+        // Game state
+        let resources = { money: 500, power: 100, oxygen: 100, food: 0, population: 0 };
+        let selectedBuilding = null;
+        let grid = Array.from({ length: GRID_HEIGHT }, () => Array(GRID_WIDTH).fill(null));
+        let upgradeMultiplier = 1.0;
+        
+        function getCost(type) {
+            switch (type) {
+                case 'habitat': return 200;
+                case 'farm': return 150;
+                case 'energy_unit': return 100;
+                default: return 0;
+            }
+        }
+        
+        function getColor(type) {
+            switch (type) {
+                case 'habitat': return '#00bfff';
+                case 'farm': return '#4ade80';
+                case 'energy_unit': return '#ff8800';
+                default: return '#666';
+            }
+        }
+        
+        function countBuildings(type) {
+            let count = 0;
+            for (let y = 0; y < GRID_HEIGHT; y++) {
+                for (let x = 0; x < GRID_WIDTH; x++) {
+                    if (grid[y][x] === type) count++;
+                }
+            }
+            return count;
+        }
+        
+        function updateResourcesDisplay() {
+            document.getElementById('money').textContent = Math.floor(resources.money);
+            document.getElementById('power').textContent = Math.floor(resources.power);
+            document.getElementById('oxygen').textContent = Math.floor(resources.oxygen);
+            document.getElementById('food').textContent = Math.floor(resources.food);
+            document.getElementById('population').textContent = Math.floor(resources.population);
+        }
+        
+        function selectBuilding(type) {
+            selectedBuilding = type;
+            const status = document.getElementById('status');
+            log(`Selected: ${type.replace('_', ' ')}`);
+        }
+        
+        function placeBuilding(gridX, gridY) {
+            if (!selectedBuilding) return;
+            const cost = getCost(selectedBuilding);
+            if (resources.money < cost) {
+                log('Not enough money!');
+                return;
+            }
+            if (grid[gridY][gridX] !== null) {
+                log('Spot occupied!');
+                return;
+            }
+            resources.money -= cost;
+            grid[gridY][gridX] = selectedBuilding;
+            log(`Placed ${selectedBuilding.replace('_', ' ')} at grid (${gridX}, ${gridY})`);
+            selectedBuilding = null;
+            updateResourcesDisplay();
+            render();
+        }
+        
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const gridX = Math.floor(x / CELL_SIZE);
+            const gridY = Math.floor(y / CELL_SIZE);
+            if (gridX >= 0 && gridX < GRID_WIDTH && gridY >= 0 && gridY < GRID_HEIGHT) {
+                placeBuilding(gridX, gridY);
+            }
+        });
+        
+        function log(message) {
+            const status = document.getElementById('status');
+            const time = new Date().toLocaleTimeString();
+            status.innerHTML = `<div style="color: #ff6b6b; margin-bottom: 2px;">${time}: ${message}</div>` + status.innerHTML;
+            // Keep only last 10 messages
+            const divs = status.getElementsByTagName('div');
+            while (divs.length > 10) {
+                status.removeChild(divs[0]);
+            }
+            status.scrollTop = 0;
+        }
+        
+        function research() {
+            if (resources.money < 300) {
+                log('Not enough money for research!');
+                return;
+            }
+            resources.money -= 300;
+            upgradeMultiplier += 0.5;
+            log('Research complete! All production upgraded.');
+            updateResourcesDisplay();
+        }
+        
+        function gameUpdate() {
+            const numEnergy = countBuildings('energy_unit');
+            const numFarm = countBuildings('farm');
+            const numHabitat = countBuildings('habitat');
+            
+            // Resource production/consumption
+            resources.power += (numEnergy * 5 * upgradeMultiplier) - (numHabitat * 2);
+            resources.oxygen += (numFarm * 3 * upgradeMultiplier) - (numHabitat * 1) - (resources.population * 0.5);
+            resources.food += (numFarm * 1 * upgradeMultiplier) - (resources.population * 0.2);
+            resources.population += numHabitat * 0.01 * upgradeMultiplier; // Slow, thoughtful growth
+            
+            // Random events
+            if (Math.random() < 0.005) { // Meteor shower (~every 200s)
+                const randX = Math.floor(Math.random() * GRID_WIDTH);
+                const randY = Math.floor(Math.random() * GRID_HEIGHT);
+                if (grid[randY][randX] !== null) {
+                    const destroyedType = grid[randY][randX];
+                    grid[randY][randX] = null;
+                    log(`Meteor shower! ${destroyedType.replace('_', ' ')} destroyed.`);
+                    render();
+                } else {
+                    log('Meteor shower! Missed the colony.');
+                }
+            }
+            if (Math.random() < 0.002) { // Moonquake (rarer, ~every 500s)
+                resources.power = Math.max(0, resources.power - 50);
+                resources.oxygen = Math.max(0, resources.oxygen - 50);
+                log('Moonquake! Critical resources damaged.');
+            }
+            
+            // Shortage penalties
+            if (resources.power < 0) {
+                resources.power = 0;
+                log('Power shortage! Population morale drops.');
+                resources.population = Math.max(0, resources.population - 1);
+            }
+            if (resources.oxygen < 0) {
+                resources.oxygen = 0;
+                log('Oxygen shortage! Emergency alert!');
+                resources.population = Math.max(0, resources.population - 2);
+            }
+            if (resources.food < 0) {
+                resources.food = 0;
+                log('Food shortage! Rations cut.');
+                resources.population = Math.max(0, resources.population - 0.5);
+            }
+            
+            updateResourcesDisplay();
+        }
+        
+        function render() {
+            // Lunar background
+            ctx.fillStyle = '#3a3a3a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Craters for immersion
+            ctx.fillStyle = '#2a2a2a';
+            ctx.beginPath();
+            ctx.arc(150, 150, 60, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(500, 300, 80, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(700, 100, 40, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(200, 450, 50, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Grid lines
+            ctx.strokeStyle = '#555555';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= GRID_WIDTH; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * CELL_SIZE, 0);
+                ctx.lineTo(i * CELL_SIZE, GRID_HEIGHT * CELL_SIZE);
+                ctx.stroke();
+            }
+            for (let j = 0; j <= GRID_HEIGHT; j++) {
+                ctx.beginPath();
+                ctx.moveTo(0, j * CELL_SIZE);
+                ctx.lineTo(GRID_WIDTH * CELL_SIZE, j * CELL_SIZE);
+                ctx.stroke();
+            }
+            
+            // Buildings
+            for (let y = 0; y < GRID_HEIGHT; y++) {
+                for (let x = 0; x < GRID_WIDTH; x++) {
+                    const type = grid[y][x];
+                    if (type) {
+                        ctx.fillStyle = getColor(type);
+                        ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                        // Label
+                        ctx.fillStyle = '#000000';
+                        ctx.font = 'bold 10px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        const label = type.replace('_', ' ').toUpperCase().substring(0, 4);
+                        ctx.fillText(label, x * CELL_SIZE + CELL_SIZE / 2, y * CELL_SIZE + CELL_SIZE / 2);
+                    }
+                }
+            }
+            
+            requestAnimationFrame(render);
+        }
+        
+        // Initialize
+        updateResourcesDisplay();
+        render();
+        setInterval(gameUpdate, 1000);
+        log('🌕 Lunar Colony Tycoon initialized. Start building your future!');
+        
+        console.log('🎮 Lunar Colony Tycoon loaded successfully! Genre: tycoon/builder');
+    </script>
+</body>
+</html>
