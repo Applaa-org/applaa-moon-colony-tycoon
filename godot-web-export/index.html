@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <title>Lunar Colony Tycoon</title>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500&display=swap');
         * {
             margin: 0;
             padding: 0;
@@ -15,336 +17,659 @@
             align-items: center;
             min-height: 100vh;
             background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #2d2d30 100%);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Roboto', sans-serif;
             color: #cccccc;
+            overflow-x: hidden;
+            touch-action: manipulation;
         }
         #gameContainer {
             text-align: center;
             padding: 20px;
             position: relative;
-        }
-        #gameCanvas {
-            border: 2px solid #00bfff;
-            border-radius: 8px;
-            background: #1a1a1a;
-            box-shadow: 0 4px 20px rgba(0, 191, 255, 0.3);
-            display: block;
-            margin: 20px auto;
+            max-width: 100vw;
+            width: 100%;
         }
         h1 {
-            background: linear-gradient(135deg, #00bfff, #ff8800);
+            background: linear-gradient(135deg, #00bfff, #4a9eff, #ff8800);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             margin-bottom: 10px;
-            font-size: 28px;
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(24px, 4vw, 32px);
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-shadow: 0 0 20px rgba(0, 191, 255, 0.5);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        @keyframes glow {
+            from { text-shadow: 0 0 20px rgba(0, 191, 255, 0.5); }
+            to { text-shadow: 0 0 30px rgba(255, 136, 0, 0.5); }
         }
         .info {
             color: #999999;
-            font-size: 14px;
+            font-size: clamp(12px, 2vw, 14px);
             margin-bottom: 20px;
-            max-width: 800px;
+            max-width: 90vw;
+            line-height: 1.5;
+            opacity: 0;
+            animation: fadeIn 1s ease-out 0.5s forwards;
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; }
         }
         .resources {
             display: flex;
+            flex-wrap: wrap;
             justify-content: center;
-            gap: 30px;
+            gap: 15px;
             margin: 15px 0;
-            font-size: 16px;
+            font-size: clamp(14px, 2.5vw, 16px);
             color: #4ade80;
-            font-weight: bold;
+            font-weight: 500;
         }
         .resources div {
-            background: rgba(0, 0, 0, 0.5);
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid #555;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 10px 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            min-width: 120px;
+            position: relative;
+            overflow: hidden;
+        }
+        .resources div::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+        .resources div:hover::before {
+            left: 100%;
+        }
+        .resources div:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 158, 255, 0.4);
+            border-color: #00bfff;
+        }
+        .resources div.low {
+            border-color: #ff6b6b;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        #gameCanvas {
+            border: 2px solid rgba(0, 191, 255, 0.5);
+            border-radius: 12px;
+            background: #1a1a1a;
+            box-shadow: 0 8px 32px rgba(0, 191, 255, 0.2);
+            display: block;
+            margin: 20px auto;
+            max-width: 100%;
+            max-height: 70vh;
+            touch-action: none;
+            transition: box-shadow 0.3s ease;
+        }
+        #gameCanvas:hover {
+            box-shadow: 0 12px 40px rgba(0, 191, 255, 0.3);
         }
         #sidebar {
             position: absolute;
             left: 20px;
-            top: 200px;
-            width: 160px;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #00bfff;
-            box-shadow: 0 4px 15px rgba(0, 191, 255, 0.2);
+            top: 50%;
+            transform: translateY(-50%);
+            width: clamp(140px, 20vw, 180px);
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px 15px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        #sidebar h3 {
+            color: #00bfff;
+            font-family: 'Orbitron', monospace;
+            font-size: 16px;
+            margin-bottom: 15px;
+            text-align: center;
         }
         #sidebar button {
             display: block;
             width: 100%;
             margin: 8px 0;
-            padding: 10px;
-            background: linear-gradient(135deg, #333, #444);
+            padding: 12px;
+            background: linear-gradient(135deg, rgba(51, 51, 51, 0.8), rgba(68, 68, 68, 0.8));
             color: #ccc;
-            border: 1px solid #555;
-            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
             cursor: pointer;
             font-size: 14px;
-            transition: all 0.3s;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            aria-label: `Select ${button text}`;
+        }
+        #sidebar button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 191, 255, 0.2), transparent);
+            transition: left 0.5s;
         }
         #sidebar button:hover {
             background: linear-gradient(135deg, #00bfff, #0099cc);
             color: white;
             border-color: #00bfff;
-            transform: translateY(-1px);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 4px 15px rgba(0, 191, 255, 0.4);
+        }
+        #sidebar button:hover::before {
+            left: 100%;
+        }
+        #sidebar button:active {
+            transform: scale(0.98);
+        }
+        #sidebar button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        #searchLog {
+            margin: 10px 0;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #ccc;
+            font-size: 12px;
+            width: 100%;
         }
         #status {
-            margin: 15px 0;
+            margin: 15px auto;
             max-height: 150px;
             overflow-y: auto;
             font-size: 12px;
             color: #ff6b6b;
             text-align: left;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #555;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            max-width: 90vw;
+            transition: max-height 0.3s ease;
         }
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 5px;
+            border-left: 3px solid #00bfff;
+            padding-left: 10px;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .log-entry.error { border-left-color: #ff6b6b; }
+        .log-entry.success { border-left-color: #4ade80; }
+        .empty-state {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #999;
+            font-size: 16px;
+            z-index: 5;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 12px;
+            display: none;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 100;
+        }
+        .toast.show {
+            transform: translateX(0);
+        }
+        .toast.error { background: rgba(255, 107, 107, 0.9); }
+        .toast.success { background: rgba(74, 222, 128, 0.9); }
         .controls {
             margin-top: 15px;
             color: #cccccc;
-            font-size: 13px;
+            font-size: clamp(11px, 2vw, 13px);
+            max-width: 90vw;
+        }
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            #sidebar {
+                position: static;
+                transform: none;
+                margin: 10px auto;
+                width: 90%;
+            }
+            .resources {
+                gap: 10px;
+                justify-content: space-around;
+            }
+            #gameCanvas {
+                width: 100%;
+                height: auto;
+            }
+            body {
+                padding: 10px;
+            }
+        }
+        /* Pull-to-refresh */
+        #pullToRefresh {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(135deg, #00bfff, #0099cc);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+            z-index: 20;
+            font-family: 'Orbitron', monospace;
+        }
+        #pullToRefresh.show {
+            transform: translateY(0);
+        }
+        /* Skeleton loading */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 8px;
+        }
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
     </style>
 </head>
 <body>
+    <div id="pullToRefresh" class="skeleton" style="display: none;">Refreshing resources...</div>
     <div id="gameContainer">
         <h1>🌕 Lunar Colony Tycoon</h1>
         <div class="info">Humanity's first steps on the Moon. As colony manager, build habitats, farms, and energy units while managing oxygen and power. Research new tech to expand and survive threats like meteor showers and moonquakes in this futuristic tycoon builder.</div>
-        <div class="resources">
-            <div>Money: <span id="money">500</span></div>
-            <div>Power: <span id="power">100</span></div>
-            <div>Oxygen: <span id="oxygen">100</span></div>
-            <div>Food: <span id="food">0</span></div>
-            <div>Population: <span id="population">0</span></div>
+        <div class="resources" id="resources">
+            <!-- Dynamically populated -->
         </div>
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
-        <div id="sidebar">
-            <button onclick="selectBuilding('habitat')">Habitat (200)</button>
-            <button onclick="selectBuilding('farm')">Farm (150)</button>
-            <button onclick="selectBuilding('energy_unit')">Energy Unit (100)</button>
-            <button onclick="research()">Research (300)</button>
+        <canvas id="gameCanvas" width="800" height="600" aria-label="Game grid for building placement"></canvas>
+        <div id="sidebar" role="navigation" aria-label="Building and research options">
+            <h3>Build & Research</h3>
+            <input type="text" id="searchLog" placeholder="Filter log..." aria-label="Filter event log" oninput="filterLog(this.value)">
+            <button onclick="selectBuilding('habitat')" aria-label="Select Habitat building">Habitat (200)</button>
+            <button onclick="selectBuilding('farm')" aria-label="Select Farm building">Farm (150)</button>
+            <button onclick="selectBuilding('energy_unit')" aria-label="Select Energy Unit">Energy (100)</button>
+            <button onclick="selectBuilding('oxygen_tank')" aria-label="Select Oxygen Tank">O2 Tank (120)</button>
+            <button onclick="selectBuilding('lab')" aria-label="Select Research Lab">Lab (250)</button>
+            <button onclick="selectBuilding('defense_tower')" aria-label="Select Defense Tower">Defense (180)</button>
+            <button onclick="selectBuilding('water_extractor')" aria-label="Select Water Extractor">Water (160)</button>
+            <button onclick="selectBuilding('solar_panel')" aria-label="Select Solar Panel">Solar (80)</button>
+            <button onclick="selectBuilding('greenhouse')" aria-label="Select Greenhouse">Greenhouse (220)</button>
+            <button onclick="selectBuilding('mine')" aria-label="Select Mine">Mine (140)</button>
+            <button onclick="selectBuilding('hospital')" aria-label="Select Hospital">Hospital (300)</button>
+            <button onclick="selectBuilding('storage')" aria-label="Select Storage">Storage (90)</button>
+            <button onclick="research('power_upgrade')" aria-label="Research Power Upgrade">Power Up (300)</button>
+            <button onclick="research('oxygen_upgrade')" aria-label="Research Oxygen Upgrade">O2 Up (300)</button>
+            <button onclick="research('food_upgrade')" aria-label="Research Food Upgrade">Food Up (300)</button>
+            <button onclick="research('defense_upgrade')" aria-label="Research Defense Upgrade">Defense Up (400)</button>
         </div>
-        <div id="status"></div>
+        <div id="status" role="log" aria-live="polite" aria-label="Event log"></div>
+        <div class="empty-state" id="emptyState" role="alert" aria-label="Guidance for empty colony">
+            <div style="font-size: 18px; margin-bottom: 10px;">🚀 Start Your Colony</div>
+            <p>Select a building from the sidebar and click the grid to place it. Balance resources to thrive!</p>
+        </div>
         <div class="controls">
-            Select a building from the sidebar, then click on the grid to place it. Balance resources to grow your colony and survive events!
+            Select a building from the sidebar, then tap/click on the grid to place it. Pull down to refresh resources. Balance resources to grow your colony and survive events!
         </div>
     </div>
+    <div id="toast" class="toast" role="alert" aria-live="assertive"></div>
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        const toastEl = document.getElementById('toast');
+        const resourcesEl = document.getElementById('resources');
+        const emptyStateEl = document.getElementById('emptyState');
+        const statusEl = document.getElementById('status');
+        const pullRefreshEl = document.getElementById('pullToRefresh');
         
         // Game constants
         const GRID_WIDTH = 20;
         const GRID_HEIGHT = 15;
-        const CELL_SIZE = 40;
+        const CELL_SIZE = Math.min(40, Math.min(canvas.width / GRID_WIDTH, canvas.height / GRID_HEIGHT));
+        canvas.width = GRID_WIDTH * CELL_SIZE;
+        canvas.height = GRID_HEIGHT * CELL_SIZE;
+        
+        // Expanded mock data: Buildings and researches
+        const buildings = {
+            habitat: { cost: 200, color: '#00bfff', production: { population: 0.01 }, consumption: { power: 2, oxygen: 1 } },
+            farm: { cost: 150, color: '#4ade80', production: { food: 1, oxygen: 3 }, consumption: { power: 1 } },
+            energy_unit: { cost: 100, color: '#ff8800', production: { power: 5 } },
+            oxygen_tank: { cost: 120, color: '#00ff88', production: { oxygen: 4 } },
+            lab: { cost: 250, color: '#ff00ff', production: { research: 0.5 } },
+            defense_tower: { cost: 180, color: '#ff4444', production: { defense: 1 } },
+            water_extractor: { cost: 160, color: '#4169e1', production: { water: 2 } },
+            solar_panel: { cost: 80, color: '#ffd700', production: { power: 3 } },
+            greenhouse: { cost: 220, color: '#32cd32', production: { food: 2, oxygen: 5 } },
+            mine: { cost: 140, color: '#8b4513', production: { money: 10 } },
+            hospital: { cost: 300, color: '#ff69b4', production: { health: 1 } },
+            storage: { cost: 90, color: '#a9a9a9', production: { storage: 50 } }
+        };
+        const researches = {
+            power_upgrade: { cost: 300, effect: () => upgradeMultiplier.power *= 1.2 },
+            oxygen_upgrade: { cost: 300, effect: () => upgradeMultiplier.oxygen *= 1.2 },
+            food_upgrade: { cost: 300, effect: () => upgradeMultiplier.food *= 1.2 },
+            defense_upgrade: { cost: 400, effect: () => upgradeMultiplier.defense *= 1.5 }
+        };
+        const events = [
+            { type: 'meteor_shower', chance: 0.005, effect: (grid) => { /* destroy random building */ } },
+            { type: 'moonquake', chance: 0.002, effect: () => { resources.power -= 50; resources.oxygen -= 50; } },
+            { type: 'solar_flare', chance: 0.003, effect: () => { resources.power = 0; logEvent('Solar flare! Power outage!', 'error'); } },
+            { type: 'dust_storm', chance: 0.004, effect: () => { resources.oxygen -= 30; logEvent('Dust storm! Oxygen filters clogged.', 'error'); } },
+            { type: 'tech_breakthrough', chance: 0.001, effect: () => { upgradeMultiplier.all *= 1.1; logEvent('Tech breakthrough! All production +10%.', 'success'); } },
+            { type: 'supply_drop', chance: 0.002, effect: () => { resources.money += 500; logEvent('Earth supply drop! +500 money.', 'success'); } },
+            { type: 'population_growth', chance: 0.006, effect: () => { resources.population += 5; logEvent('Natural population growth! +5 colonists.', 'success'); } },
+            { type: 'equipment_failure', chance: 0.003, effect: () => { resources.money -= 200; logEvent('Equipment failure! -200 money for repairs.', 'error'); } }
+        ];
         
         // Game state
-        let resources = { money: 500, power: 100, oxygen: 100, food: 0, population: 0 };
+        let resources = { money: 500, power: 100, oxygen: 100, food: 0, population: 0, water: 0, health: 0 };
         let selectedBuilding = null;
         let grid = Array.from({ length: GRID_HEIGHT }, () => Array(GRID_WIDTH).fill(null));
-        let upgradeMultiplier = 1.0;
-        
-        function getCost(type) {
-            switch (type) {
-                case 'habitat': return 200;
-                case 'farm': return 150;
-                case 'energy_unit': return 100;
-                default: return 0;
-            }
-        }
-        
-        function getColor(type) {
-            switch (type) {
-                case 'habitat': return '#00bfff';
-                case 'farm': return '#4ade80';
-                case 'energy_unit': return '#ff8800';
-                default: return '#666';
-            }
-        }
-        
-        function countBuildings(type) {
-            let count = 0;
-            for (let y = 0; y < GRID_HEIGHT; y++) {
-                for (let x = 0; x < GRID_WIDTH; x++) {
-                    if (grid[y][x] === type) count++;
-                }
-            }
-            return count;
-        }
+        let upgradeMultiplier = { power: 1, oxygen: 1, food: 1, defense: 1, all: 1 };
+        let logEntries = [];
+        let filteredLogs = [];
         
         function updateResourcesDisplay() {
-            document.getElementById('money').textContent = Math.floor(resources.money);
-            document.getElementById('power').textContent = Math.floor(resources.power);
-            document.getElementById('oxygen').textContent = Math.floor(resources.oxygen);
-            document.getElementById('food').textContent = Math.floor(resources.food);
-            document.getElementById('population').textContent = Math.floor(resources.population);
+            const resourceKeys = ['money', 'power', 'oxygen', 'food', 'population'];
+            resourcesEl.innerHTML = resourceKeys.map(key => {
+                const value = Math.floor(resources[key]);
+                const isLow = value < 20;
+                return `<div class="${isLow ? 'low' : ''}" aria-label="${key}: ${value}">${key.charAt(0).toUpperCase() + key.slice(1)}: <span id="${key}">${value}</span></div>`;
+            }).join('');
+            
+            // Show empty state if no buildings and low resources
+            const hasBuildings = grid.flat().some(cell => cell !== null);
+            emptyStateEl.style.display = (!hasBuildings && resources.money < 100) ? 'block' : 'none';
+            
+            // Check shortages
+            if (resources.power < 0) resources.power = 0;
+            if (resources.oxygen < 0) resources.oxygen = 0;
+            if (resources.food < 0) resources.food = 0;
         }
         
         function selectBuilding(type) {
+            if (!buildings[type]) return;
             selectedBuilding = type;
-            const status = document.getElementById('status');
-            log(`Selected: ${type.replace('_', ' ')}`);
+            showToast(`Selected: ${type.replace('_', ' ').toUpperCase()}`, 'success');
+            logEvent(`Selected: ${type.replace('_', ' ')}`);
+            // Disable other buttons visually
+            document.querySelectorAll('#sidebar button').forEach(btn => btn.disabled = false);
+            event.target.disabled = true;
+        }
+        
+        function research(type) {
+            if (!researches[type]) return;
+            if (resources.money < researches[type].cost) {
+                showToast('Not enough money for research!', 'error');
+                return;
+            }
+            resources.money -= researches[type].cost;
+            researches[type].effect();
+            logEvent(`Research complete: ${type.replace('_', ' ').toUpperCase()}!`);
+            showToast('Research upgraded!', 'success');
+            updateResourcesDisplay();
         }
         
         function placeBuilding(gridX, gridY) {
-            if (!selectedBuilding) return;
-            const cost = getCost(selectedBuilding);
-            if (resources.money < cost) {
-                log('Not enough money!');
+            if (!selectedBuilding || !buildings[selectedBuilding]) return;
+            const building = buildings[selectedBuilding];
+            if (resources.money < building.cost) {
+                showToast('Not enough money!', 'error');
                 return;
             }
             if (grid[gridY][gridX] !== null) {
-                log('Spot occupied!');
+                showToast('Spot occupied!', 'error');
                 return;
             }
-            resources.money -= cost;
+            resources.money -= building.cost;
             grid[gridY][gridX] = selectedBuilding;
-            log(`Placed ${selectedBuilding.replace('_', ' ')} at grid (${gridX}, ${gridY})`);
+            logEvent(`Placed ${selectedBuilding.replace('_', ' ')} at (${gridX}, ${gridY})`);
+            // Animation: Flash the cell
+            const flashCtx = canvas.getContext('2d');
+            const originalColor = building.color;
+            setTimeout(() => {
+                building.color = '#ffffff';
+                render();
+                setTimeout(() => {
+                    building.color = originalColor;
+                    render();
+                }, 200);
+            }, 10);
             selectedBuilding = null;
+            document.querySelectorAll('#sidebar button').forEach(btn => btn.disabled = false);
             updateResourcesDisplay();
             render();
         }
         
-        canvas.addEventListener('click', (e) => {
+        // Event handling with touch support
+        let startY = 0;
+        canvas.addEventListener('click', handleClick);
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startY = e.touches[0].clientY;
+            handleClick(e.touches[0]);
+        }, { passive: false });
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const currentY = e.touches[0].clientY;
+            if (currentY - startY > 100) { // Pull down threshold
+                pullRefreshEl.style.display = 'flex';
+                pullRefreshEl.classList.add('show');
+            }
+        }, { passive: false });
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            if (pullRefreshEl.classList.contains('show')) {
+                gameUpdate(true); // Force refresh
+                pullRefreshEl.classList.remove('show');
+                setTimeout(() => pullRefreshEl.style.display = 'none', 300);
+            }
+            startY = 0;
+        }, { passive: false });
+        
+        function handleClick(e) {
             const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            const x = (e.clientX || e.touches[0].clientX) - rect.left;
+            const y = (e.clientY || e.touches[0].clientY) - rect.top;
             const gridX = Math.floor(x / CELL_SIZE);
             const gridY = Math.floor(y / CELL_SIZE);
             if (gridX >= 0 && gridX < GRID_WIDTH && gridY >= 0 && gridY < GRID_HEIGHT) {
                 placeBuilding(gridX, gridY);
             }
-        });
+        }
         
-        function log(message) {
-            const status = document.getElementById('status');
+        function logEvent(message, type = 'info') {
             const time = new Date().toLocaleTimeString();
-            status.innerHTML = `<div style="color: #ff6b6b; margin-bottom: 2px;">${time}: ${message}</div>` + status.innerHTML;
-            // Keep only last 10 messages
-            const divs = status.getElementsByTagName('div');
-            while (divs.length > 10) {
-                status.removeChild(divs[0]);
-            }
-            status.scrollTop = 0;
+            const entry = { time, message, type, id: Date.now() };
+            logEntries.unshift(entry);
+            if (logEntries.length > 50) logEntries.pop(); // Limit logs
+            filterLog(document.getElementById('searchLog').value);
         }
         
-        function research() {
-            if (resources.money < 300) {
-                log('Not enough money for research!');
-                return;
-            }
-            resources.money -= 300;
-            upgradeMultiplier += 0.5;
-            log('Research complete! All production upgraded.');
-            updateResourcesDisplay();
+        function filterLog(query) {
+            filteredLogs = logEntries.filter(entry => 
+                entry.message.toLowerCase().includes(query.toLowerCase())
+            );
+            renderLogs();
         }
         
-        function gameUpdate() {
-            const numEnergy = countBuildings('energy_unit');
-            const numFarm = countBuildings('farm');
-            const numHabitat = countBuildings('habitat');
+        function renderLogs() {
+            statusEl.innerHTML = filteredLogs.map(entry => 
+                `<div class="log-entry ${entry.type}">${entry.time}: ${entry.message}</div>`
+            ).join('');
+        }
+        
+        function showToast(message, type = 'info') {
+            toastEl.textContent = message;
+            toastEl.className = `toast ${type}`;
+            toastEl.classList.add('show');
+            setTimeout(() => toastEl.classList.remove('show'), 3000);
+        }
+        
+        function countBuildings(type) {
+            return grid.flat().filter(cell => cell === type).length;
+        }
+        
+        function gameUpdate(forceRefresh = false) {
+            if (forceRefresh) {
+                showToast('Resources refreshed!', 'success');
+                logEvent('Manual resource refresh performed.');
+            }
             
-            // Resource production/consumption
-            resources.power += (numEnergy * 5 * upgradeMultiplier) - (numHabitat * 2);
-            resources.oxygen += (numFarm * 3 * upgradeMultiplier) - (numHabitat * 1) - (resources.population * 0.5);
-            resources.food += (numFarm * 1 * upgradeMultiplier) - (resources.population * 0.2);
-            resources.population += numHabitat * 0.01 * upgradeMultiplier; // Slow, thoughtful growth
-            
-            // Random events
-            if (Math.random() < 0.005) { // Meteor shower (~every 200s)
-                const randX = Math.floor(Math.random() * GRID_WIDTH);
-                const randY = Math.floor(Math.random() * GRID_HEIGHT);
-                if (grid[randY][randX] !== null) {
-                    const destroyedType = grid[randY][randX];
-                    grid[randY][randX] = null;
-                    log(`Meteor shower! ${destroyedType.replace('_', ' ')} destroyed.`);
-                    render();
-                } else {
-                    log('Meteor shower! Missed the colony.');
+            // Production based on buildings
+            Object.keys(buildings).forEach(type => {
+                const num = countBuildings(type);
+                const building = buildings[type];
+                if (building.production) {
+                    Object.keys(building.production).forEach(res => {
+                        const mult = upgradeMultiplier[res] || upgradeMultiplier.all || 1;
+                        resources[res] += num * building.production[res] * mult;
+                    });
                 }
-            }
-            if (Math.random() < 0.002) { // Moonquake (rarer, ~every 500s)
-                resources.power = Math.max(0, resources.power - 50);
-                resources.oxygen = Math.max(0, resources.oxygen - 50);
-                log('Moonquake! Critical resources damaged.');
-            }
+                if (building.consumption) {
+                    Object.keys(building.consumption).forEach(res => {
+                        resources[res] -= num * building.consumption[res];
+                    });
+                }
+            });
             
-            // Shortage penalties
-            if (resources.power < 0) {
-                resources.power = 0;
-                log('Power shortage! Population morale drops.');
-                resources.population = Math.max(0, resources.population - 1);
-            }
-            if (resources.oxygen < 0) {
-                resources.oxygen = 0;
-                log('Oxygen shortage! Emergency alert!');
-                resources.population = Math.max(0, resources.population - 2);
-            }
-            if (resources.food < 0) {
-                resources.food = 0;
-                log('Food shortage! Rations cut.');
-                resources.population = Math.max(0, resources.population - 0.5);
-            }
+            // Random events (expanded)
+            events.forEach(event => {
+                if (Math.random() < event.chance) {
+                    logEvent(event.type.replace('_', ' ').toUpperCase() + '!', event.type.includes('upgrade') || event.type.includes('supply') ? 'success' : 'error');
+                    event.effect(grid);
+                    if (event.type === 'meteor_shower') {
+                        const randX = Math.floor(Math.random() * GRID_WIDTH);
+                        const randY = Math.floor(Math.random() * GRID_HEIGHT);
+                        if (grid[randY] && grid[randY][randX]) {
+                            const destroyed = grid[randY][randX];
+                            grid[randY][randX] = null;
+                            logEvent(`${destroyed.replace('_', ' ')} destroyed by meteor!`, 'error');
+                            render();
+                        }
+                    } else {
+                        event.effect();
+                    }
+                }
+            });
             
             updateResourcesDisplay();
         }
         
         function render() {
-            // Lunar background
-            ctx.fillStyle = '#3a3a3a';
+            // Lunar background with gradient craters
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, '#3a3a3a');
+            gradient.addColorStop(1, '#2a2a2a');
+            ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Craters for immersion
-            ctx.fillStyle = '#2a2a2a';
-            ctx.beginPath();
-            ctx.arc(150, 150, 60, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(500, 300, 80, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(700, 100, 40, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(200, 450, 50, 0, Math.PI * 2);
-            ctx.fill();
+            // Enhanced craters with shadows
+            const craters = [
+                {x: 150, y: 150, r: 60}, {x: 500, y: 300, r: 80}, {x: 700, y: 100, r: 40}, {x: 200, y: 450, r: 50},
+                {x: 100, y: 500, r: 30}, {x: 600, y: 200, r: 45}
+            ];
+            craters.forEach(c => {
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+                ctx.fillStyle = '#1a1a1a';
+                ctx.fill();
+                ctx.strokeStyle = '#111';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            });
             
-            // Grid lines
-            ctx.strokeStyle = '#555555';
+            // Grid lines with subtle glow
+            ctx.strokeStyle = 'rgba(85, 85, 85, 0.5)';
             ctx.lineWidth = 1;
             for (let i = 0; i <= GRID_WIDTH; i++) {
                 ctx.beginPath();
                 ctx.moveTo(i * CELL_SIZE, 0);
-                ctx.lineTo(i * CELL_SIZE, GRID_HEIGHT * CELL_SIZE);
+                ctx.lineTo(i * CELL_SIZE, canvas.height);
                 ctx.stroke();
             }
             for (let j = 0; j <= GRID_HEIGHT; j++) {
                 ctx.beginPath();
                 ctx.moveTo(0, j * CELL_SIZE);
-                ctx.lineTo(GRID_WIDTH * CELL_SIZE, j * CELL_SIZE);
+                ctx.lineTo(canvas.width, j * CELL_SIZE);
                 ctx.stroke();
             }
             
-            // Buildings
+            // Buildings with rounded cards and shadows
             for (let y = 0; y < GRID_HEIGHT; y++) {
                 for (let x = 0; x < GRID_WIDTH; x++) {
                     const type = grid[y][x];
-                    if (type) {
-                        ctx.fillStyle = getColor(type);
-                        ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                    if (type && buildings[type]) {
+                        const building = buildings[type];
+                        const px = x * CELL_SIZE + 2;
+                        const py = y * CELL_SIZE + 2;
+                        const size = CELL_SIZE - 4;
+                        
+                        // Shadow
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                        ctx.fillRect(px + 2, py + 2, size, size);
+                        
+                        // Card background
+                        ctx.fillStyle = building.color;
+                        ctx.fillRect(px, py, size, size);
                         ctx.strokeStyle = '#ffffff';
                         ctx.lineWidth = 2;
-                        ctx.strokeRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
-                        // Label
+                        ctx.strokeRect(px, py, size, size);
+                        ctx.lineJoin = 'round';
+                        ctx.strokeRect(px + 1, py + 1, size - 2, size - 2);
+                        
+                        // Label with gradient text
                         ctx.fillStyle = '#000000';
-                        ctx.font = 'bold 10px Arial';
+                        ctx.font = 'bold 10px Orbitron';
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
                         const label = type.replace('_', ' ').toUpperCase().substring(0, 4);
-                        ctx.fillText(label, x * CELL_SIZE + CELL_SIZE / 2, y * CELL_SIZE + CELL_SIZE / 2);
+                        ctx.fillText(label, px + size / 2, py + size / 2);
                     }
                 }
             }
@@ -352,13 +677,24 @@
             requestAnimationFrame(render);
         }
         
-        // Initialize
-        updateResourcesDisplay();
-        render();
-        setInterval(gameUpdate, 1000);
-        log('🌕 Lunar Colony Tycoon initialized. Start building your future!');
+        // Initialize with skeleton loading simulation
+        setTimeout(() => {
+            updateResourcesDisplay();
+            render();
+            setInterval(gameUpdate, 1000);
+            logEvent('🌕 Lunar Colony Tycoon initialized. Start building your future!', 'success');
+            showToast('Game ready! Begin colonizing.', 'success');
+        }, 500); // Simulate loading
         
-        console.log('🎮 Lunar Colony Tycoon loaded successfully! Genre: tycoon/builder');
+        // Accessibility: Keyboard navigation for sidebar
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                selectedBuilding = null;
+                document.querySelectorAll('#sidebar button').forEach(btn => btn.disabled = false);
+            }
+        });
+        
+        console.log('🎮 Lunar Colony Tycoon enhanced with premium design! Genre: tycoon/builder');
     </script>
 </body>
 </html>
