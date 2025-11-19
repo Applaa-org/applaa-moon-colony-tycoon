@@ -1,0 +1,79 @@
+{
+  "game": {
+    "name": "Lunar Colony Tycoon",
+    "type": "2D",
+    "description": "Humanity's first steps on the Moon. As colony manager, build habitats, farms, and energy units while managing oxygen and power. Research new tech to expand and survive threats like meteor showers and moonquakes in this futuristic tycoon builder.",
+    "genre": "strategy",
+    "version": "1.0.0"
+  },
+  "settings": {
+    "window": {
+      "width": 1280,
+      "height": 720,
+      "resizable": true,
+      "fullscreen": false
+    },
+    "physics": {
+      "enabled": true
+    },
+    "rendering": {}
+  },
+  "scenes": [],
+  "assets": {
+    "sprites": [
+      {
+        "name": "habitat",
+        "path": "res://assets/sprites/habitat.png",
+        "type": "building"
+      },
+      {
+        "name": "farm",
+        "path": "res://assets/sprites/farm.png",
+        "type": "building"
+      },
+      {
+        "name": "energy_unit",
+        "path": "res://assets/sprites/energy_unit.png",
+        "type": "building"
+      },
+      {
+        "name": "meteor",
+        "path": "res://assets/sprites/meteor.png",
+        "type": "enemy"
+      },
+      {
+        "name": "quake_effect",
+        "path": "res://assets/sprites/quake_effect.png",
+        "type": "effect"
+      }
+    ],
+    "sounds": [
+      {
+        "name": "build",
+        "path": "res://assets/sounds/build.wav",
+        "type": "sfx"
+      },
+      {
+        "name": "alert",
+        "path": "res://assets/sounds/alert.wav",
+        "type": "sfx"
+      },
+      {
+        "name": "research_complete",
+        "path": "res://assets/sounds/research_complete.wav",
+        "type": "sfx"
+      }
+    ],
+    "music": [
+      {
+        "name": "ambient_lunar",
+        "path": "res://assets/music/ambient_lunar.ogg"
+      },
+      {
+        "name": "tension_threat",
+        "path": "res://assets/music/tension_threat.ogg"
+      }
+    ]
+  },
+  "scripts": []
+}
